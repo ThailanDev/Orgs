@@ -50,6 +50,9 @@ class ListaProdutosActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
+        adapter.deteletar = {
+            db.produtoDao().remove(it)
+        }
     }
 
 }

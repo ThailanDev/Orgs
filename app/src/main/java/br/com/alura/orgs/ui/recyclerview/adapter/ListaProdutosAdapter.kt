@@ -1,8 +1,10 @@
 package br.com.alura.orgs.ui.recyclerview.adapter
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.view.*
-import android.widget.AdapterView
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -11,13 +13,13 @@ import br.com.alura.orgs.databinding.ProdutoItemBinding
 import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
-import br.com.alura.orgs.ui.activity.ListaProdutosActivity
 
 class ListaProdutosAdapter(
     private val context: Context,
     produtos: List<Produto> = emptyList(),
-    var quandoClicaNoItem: (produto: Produto) -> Unit = {}
-) : RecyclerView.Adapter<ListaProdutosAdapter.ViewHolder>() {
+    var quandoClicaNoItem: (produto: Produto) -> Unit = {},
+    var deteletar: (produto: Produto) -> Unit = {},
+    ) : RecyclerView.Adapter<ListaProdutosAdapter.ViewHolder>() {
 
     private val produtos = produtos.toMutableList()
 
@@ -25,7 +27,6 @@ class ListaProdutosAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         private lateinit var produto: Produto
-
         init {
             itemView.setOnClickListener {
                 if (::produto.isInitialized) {
@@ -36,17 +37,19 @@ class ListaProdutosAdapter(
                 vaiParaFormularioProduto(it)
             }
         }
-
         private fun vaiParaFormularioProduto(v: View): Boolean {
             showPopup(v, popMenu)
             return true
         }
+
         private fun showPopup(v: View, popupMenu: PopupMenu.OnMenuItemClickListener) {
-            val popup = PopupMenu(context, v)
-            val inflater: MenuInflater = popup.menuInflater
-            inflater.inflate(R.menu.menu_detalhes_produto, popup.menu)
-            popup.show()
+            PopupMenu(context, v).apply {
+                setOnMenuItemClickListener(popupMenu)
+                inflate(R.menu.menu_detalhes_produto)
+                show()
+            }
         }
+
         private val popMenu = PopupMenu.OnMenuItemClickListener { item ->
             when (item?.itemId) {
                 R.id.menu_detalhes_produto_editar -> {
@@ -54,7 +57,8 @@ class ListaProdutosAdapter(
                     true
                 }
                 R.id.menu_detalhes_produto_deletar -> {
-                    Toast.makeText(context, "deletar", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "delete", Toast.LENGTH_SHORT).show()
+                    deteletar(produto)
                     true
                 }
                 else -> false
@@ -68,28 +72,16 @@ class ListaProdutosAdapter(
             val descricao = binding.produtoItemDescricao
             descricao.text = produto.descricao
             val valor = binding.produtoItemValor
-            val valorEmMoeda: String = produto.valor
-                .formataParaMoedaBrasileira()
+            val valorEmMoeda: String = produto.valor.formataParaMoedaBrasileira()
             valor.text = valorEmMoeda
-
             val visibilidade = if (produto.imagem != null) {
                 View.VISIBLE
             } else {
                 View.GONE
             }
-
             binding.imageView.visibility = visibilidade
             binding.imageView.tentaCarregarImagem(produto.imagem)
-
-            /// --------
-//            itemView.setOnClickListener {
-//                    quandoClicaNoItem(produto)
-//            }
-//            itemView.setOnLongClickListener {
-//                vaiParaFormularioProduto(it)
-//            }
         }
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -105,6 +97,7 @@ class ListaProdutosAdapter(
 
     override fun getItemCount(): Int = produtos.size
 
+    @SuppressLint("NotifyDataSetChanged")
     fun atualiza(produtos: List<Produto>) {
         this.produtos.clear()
         this.produtos.addAll(produtos)
