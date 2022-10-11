@@ -1,7 +1,7 @@
 package br.com.alura.orgs.ui.activity
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -16,12 +16,16 @@ private const val TAG = "teste"
 
 class DetalhesProdutoActivity : AppCompatActivity() {
 
-    private lateinit var produto: Produto
+    private var produtoId: Long = 0L
+    private var produto: Produto? = null
     private val binding by lazy {
         ActivityDetalhesProdutoBinding.inflate(layoutInflater)
     }
 
-    private lateinit var db: AppDatabase
+    val produtoDao by lazy {
+        AppDatabase.instancia(this).produtoDao()
+    }
+//    private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +35,15 @@ class DetalhesProdutoActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        db = AppDatabase.instancia(this)
+        buscaProduto()
+    }
+
+    private fun buscaProduto() {
+        super.onResume()
+        produto = produtoDao.buscaPorId(produtoId)
+        produto?.let {
+            preencheCampos(it)
+        } ?: finish()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -40,13 +52,15 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
+        when (item.itemId) {
             R.id.menu_detalhes_produto_editar -> {
-                Log.d(TAG, "onOptionsItemSelected: editar")
+                Intent(this, FormularioProdutoActivity::class.java).apply {
+                    putExtra(CHAVE_PRODUTO_ID, produto?.id)
+                    startActivity(this)
+                }
             }
             R.id.menu_detalhes_produto_deletar -> {
-                if(::produto.isInitialized)
-               db.produtoDao().remove(produto)
+                produto?.let { produtoDao.remove(it) }
                 finish()
             }
         }
@@ -54,10 +68,7 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     }
 
     private fun tentaCarregarProduto() {
-        intent.getParcelableExtra<Produto>(CHAVE_PRODUTO)?.let { produtoCarregado ->
-            produto = produtoCarregado
-            preencheCampos(produtoCarregado)
-        } ?: finish()
+        produtoId = intent.getLongExtra(CHAVE_PRODUTO_ID, 0L)
     }
 
     private fun preencheCampos(produtoCarregado: Produto) {
