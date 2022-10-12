@@ -33,9 +33,9 @@ class ListaProdutosAdapter(
                     quandoClicaNoItem(produto)
                 }
             }
-            itemView.setOnLongClickListener {
-                vaiParaFormularioProduto(it)
-            }
+//            itemView.setOnLongClickListener {
+//                vaiParaFormularioProduto(it)
+//            }
         }
         private fun vaiParaFormularioProduto(v: View): Boolean {
             showPopup(v, popMenu)
@@ -97,7 +97,6 @@ class ListaProdutosAdapter(
 
     override fun getItemCount(): Int = produtos.size
 
-    @SuppressLint("NotifyDataSetChanged")
     fun atualiza(produtos: List<Produto>) {
         this.produtos.clear()
         this.produtos.addAll(produtos)

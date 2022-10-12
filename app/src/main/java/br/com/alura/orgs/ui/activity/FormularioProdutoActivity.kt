@@ -7,6 +7,10 @@ import br.com.alura.orgs.databinding.ActivityFormularioProdutoBinding
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.dialog.FormularioImagemDialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class FormularioProdutoActivity : AppCompatActivity() {
@@ -17,8 +21,10 @@ class FormularioProdutoActivity : AppCompatActivity() {
     private var url: String? = null
     private var produtoId = 0L
     private val produtoDao by lazy {
-        AppDatabase.instancia(this).produtoDao()
+        val db = AppDatabase.instancia(this)
+        db.produtoDao()
     }
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,13 +50,17 @@ class FormularioProdutoActivity : AppCompatActivity() {
     }
 
     private fun tentaBuscarProduto() {
-        produtoDao.buscaPorId(produtoId)?.let {
-            preencheCampos(it)
+        scope.launch {
+            produtoDao.buscaPorId(produtoId)?.let {
+                withContext(Dispatchers.Main) {
+                    title = "Alterar produto"
+                    preencheCampos(it)
+                }
+            }
         }
     }
 
     private fun preencheCampos(produtoCarregado: Produto) {
-        title = "Alterar produto"
         produtoId = produtoCarregado.id
         url = produtoCarregado.imagem
         with(binding) {
@@ -65,12 +75,12 @@ class FormularioProdutoActivity : AppCompatActivity() {
 
     private fun configuraBotaoSalvar() {
         val botaoSalvar = binding.activityFormularioProdutoBotaoSalvar
-        val db = AppDatabase.instancia(this)
-        val produtoDao = db.produtoDao()
         botaoSalvar.setOnClickListener {
-            val produtoNovo = criaProduto()
-            produtoDao.salva(produtoNovo)
-            finish()
+            scope.launch {
+                val produtoNovo = criaProduto()
+                produtoDao.salva(produtoNovo)
+                finish()
+            }
         }
     }
 

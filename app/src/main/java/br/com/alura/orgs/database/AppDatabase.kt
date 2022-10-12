@@ -20,13 +20,13 @@ abstract class AppDatabase : RoomDatabase() {
         private lateinit var db: AppDatabase
 
         fun instancia(context: Context): AppDatabase {
-            if(::db.isInitialized) return db
+            if (::db.isInitialized) return db
             return Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
                 "orgs.db"
             )
-                .allowMainThreadQueries()
+//                .allowMainThreadQueries()
                 .build().also {
                     db = it
                 }
